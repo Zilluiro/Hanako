@@ -1,7 +1,6 @@
 ﻿using Hanako.Exceptions;
-using Hanako.Extensions;
 using Hanako.Handlers;
-using Hanako.Internal.Models;
+using Hanako.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -16,13 +15,15 @@ namespace Hanako;
 
 internal sealed class RtmpServer : BackgroundService
 {
-    public RtmpServer(ILogger<RtmpServer> logger, IServiceProvider serviceProvider)
+    public RtmpServer(ILogger<RtmpServer> logger, Handshaker handshaker, PacketParser parser)
     {
         _logger = logger;
-        _serviceProvider = serviceProvider;
 
         _tcpListener = new TcpListener(IPAddress.Any, Constants.RTMP.Port);
         _clients = new ConcurrentDictionary<Guid, RtmpClient>();
+
+        _handshaker = handshaker;
+        _packetParser = parser;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -68,14 +69,23 @@ internal sealed class RtmpServer : BackgroundService
             }
 
             _logger.LogInformation($"Connection established. Thread: '{CurrentThreadID}'.");
-            using var netstream = connection.GetStream();
+            using var netStream = connection.GetStream();
+            var rtmpConnection = new RtmpOpenConnection(client, netStream);
+            RtmpContext.Initialize(rtmpConnection);
 
             // Perform the handshake.
             //
-            var handshaker = _serviceProvider.GetValidatedService<Handshaker>();
-            await handshaker.DoHandshakeAsync(new RtmpOpenConnection(client.Identifier, netstream), cancellationToken);
+            await _handshaker.DoHandshakeAsync(cancellationToken);
 
+            // Begin parsing RTMP packets.
+            //
 
+            while(!cancellationToken.IsCancellationRequested)
+            {
+                var package = await RtmpContext.ReaderWriter.ReadAsync(cancellationToken);
+
+                _packetParser.Parse(package);
+            }
         }
         catch(Exception e)
         {
@@ -100,10 +110,11 @@ internal sealed class RtmpServer : BackgroundService
         Interlocked.Decrement(ref _concurrentThreads);
     }
 
-    private int CurrentThreadID => Thread.CurrentThread.ManagedThreadId;
+    private static int CurrentThreadID => Environment.CurrentManagedThreadId;
 
     private readonly ILogger<RtmpServer> _logger;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly Handshaker _handshaker;
+    private readonly PacketParser _packetParser;
 
     private readonly ConcurrentDictionary<Guid, RtmpClient> _clients;
     private int _concurrentThreads;

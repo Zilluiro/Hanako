@@ -1,4 +1,4 @@
-﻿namespace Hanako.Internal.Models.Protocol;
+﻿namespace Hanako.Models.Protocol;
 
 public enum RtmpChunkHeaderType
 {

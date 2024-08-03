@@ -1,16 +1,20 @@
 ﻿using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
-namespace Hanako.Internal;
+namespace Hanako.Helpers;
 
 internal static class Guard
 {
+    [return: NotNull]
     public static T IsNotNull<T>(T argument)
     {
         ArgumentNullException.ThrowIfNull(argument);
         return argument;
     }
 
-    public static void HasLength<T>(Memory<T> collection, uint length)
+    public static void HasLength<T>(ReadOnlySequence<T> collection, uint length)
     {
         if (collection.Length != length)
         {

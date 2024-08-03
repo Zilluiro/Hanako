@@ -13,5 +13,7 @@ internal class Constants
         public const ushort HandshakePacketSize = 1536;
 
         public const byte Version = 0x3;
+
+        public const int DefaultChunkSize = 128;
     }
 }

@@ -9,8 +9,10 @@ public static class Program
     public static void Main(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
+
         builder.Services.AddHostedService<RtmpServer>();
         builder.Services.AddTransient<Handshaker>();
+        builder.Services.AddTransient<PacketParser>();
 
         var host = builder.Build();
         host.Run();

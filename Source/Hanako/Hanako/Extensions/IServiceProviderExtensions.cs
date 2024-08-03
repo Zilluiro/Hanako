@@ -1,4 +1,4 @@
-﻿using Hanako.Internal;
+﻿using Hanako.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 

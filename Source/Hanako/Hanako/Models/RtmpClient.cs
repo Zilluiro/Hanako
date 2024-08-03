@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Net.Sockets;
 
-namespace Hanako.Internal.Models;
+namespace Hanako.Models;
 
 internal class RtmpClient
 {
     public RtmpClient(TcpClient tcpClient)
     {
         TcpClient = tcpClient;
+
         Identifier = Guid.NewGuid();
     }
 

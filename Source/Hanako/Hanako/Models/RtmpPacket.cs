@@ -1,4 +1,4 @@
-﻿namespace Hanako.Internal.Models;
+﻿namespace Hanako.Models;
 
 internal class RtmpPacket
 {
